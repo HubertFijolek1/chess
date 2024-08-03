@@ -32,20 +32,20 @@ This document outlines the development roadmap for the Chess Application. The pr
 - **Move Validation**:
   - Implement basic move validation for each piece type.
 
-### Version 1.1.3.1: User Input Handling and Parse Position
+#### Version 1.1.3.1: User Input Handling and Parse Position
 - **User Input Handling**:
   - Added input prompts in the `main` function for user moves.
   - Split user input into start and end positions.
 - **Parse Position**:
   - Implemented the `parse_position` function to convert input into row and column indices.
 
-### Version 1.1.3.2: Add `move_piece` Method and `self.current_turn` Attribute
+#### Version 1.1.3.2: Add `move_piece` Method and `self.current_turn` Attribute
 - **Move Piece Method**:
   - Added the `move_piece` method in the `Board` class to handle piece movement and validation.
 - **Current Turn Attribute**:
   - Added the `self.current_turn` attribute to track the player's turn.
 
-### Version 1.1.3.3: Implement Move Logic for Rook and Bishop
+#### Version 1.1.3.3: Implement Move Logic for Rook and Bishop
 - **Rook Move Logic**:
   - Rooks move any number of squares along a row or column.
   - Ensured the path between start and end is clear.
@@ -53,14 +53,14 @@ This document outlines the development roadmap for the Chess Application. The pr
   - Bishops move any number of squares diagonally.
   - Ensured the path between start and end is clear.
 
-### Version 1.1.3.4: Implement Move Logic for King and Queen
+#### Version 1.1.3.4: Implement Move Logic for King and Queen
 - **King Move Logic**:
   - Kings move one square in any direction.
 - **Queen Move Logic**:
   - Queens move any number of squares along a row, column, or diagonal.
   - Ensured the path between start and end is clear.
 
-### Version 1.1.3.5: Implement Move Logic for Knight and Pawn
+#### Version 1.1.3.5: Implement Move Logic for Knight and Pawn
 - **Knight Move Logic**:
   - Knights move in an L-shape: two squares in one direction and then one square perpendicular.
 - **Pawn Move Logic**:
