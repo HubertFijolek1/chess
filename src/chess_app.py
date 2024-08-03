@@ -17,6 +17,25 @@ class ChessPiece:
         """
         return 'Piece'
 
+    def can_move_to(self, end, board):
+        """
+        Checks if the piece can move to the specified position on the board.
+        
+        Args:
+            end (tuple): The position to move to (row, col).
+            board (list): The current state of the board.
+        
+        Returns:
+            bool: True if the move is valid, False otherwise.
+        """
+        end_row, end_col = end
+        # Ensure the destination square is either empty or occupied by an opponent's piece.
+        if board[end_row][end_col] is None:
+            return True
+        if board[end_row][end_col].color != self.color:
+            return True
+        return False
+
 class King(ChessPiece):
     def __str__(self):
         """
@@ -41,11 +60,12 @@ class King(ChessPiece):
             bool: True if the move is valid, False otherwise.
         """
         # Calculate the difference in rows and columns between the start and end positions.
-        row_diff = abs(start[0] - end[0])
-        col_diff = abs(start[1] - end[1])
-        
-        # King moves one square in any direction, so row and column differences must both be <= 1.
-        return row_diff <= 1 and col_diff <= 1
+        start_row, start_col = start
+        end_row, end_col = end
+        row_diff = abs(start_row - end_row)
+        col_diff = abs(start_col - end_col)
+        return max(row_diff, col_diff) == 1 and self.can_move_to(end, board)
+
 
 class Queen(ChessPiece):
     def __str__(self):
@@ -233,44 +253,38 @@ class Knight(ChessPiece):
 
 class Pawn(ChessPiece):
     def __str__(self):
-        """
-        Returns the string representation of the Pawn piece.
-        
-        Returns:
-            str: 'P' for a white pawn, 'p' for a black pawn.
-        """
         return 'P' if self.color == 'white' else 'p'
 
     def is_valid_move(self, start, end, board):
-        """
-        Validate if the move is valid for the Pawn piece.
-        Pawn moves forward one square, with the option to move two squares on their first move.
-        Pawns capture diagonally.
-        
-        Args:
-            start (tuple): The starting position of the piece (row, col).
-            end (tuple): The ending position of the piece (row, col).
-            board (list): The current state of the board.
-        
-        Returns:
-            bool: True if the move is valid, False otherwise.
-        """
-        direction = 1 if self.color == 'white' else -1
+        direction = 1 if self.color == 'white' else -1  # Determine direction based on color
         start_row, start_col = start
         end_row, end_col = end
-        
-        # Move forward one square
-        if start_col == end_col:
-            if end_row - start_row == direction:
-                return board[end_row][end_col] is None
-            # Move forward two squares from starting position
-            if (start_row == 1 and self.color == 'black') or (start_row == 6 and self.color == 'white'):
-                return end_row - start_row == 2 * direction and board[end_row][end_col] is None
-        # Capture diagonally
-        if abs(start_col - end_col) == 1 and end_row - start_row == direction:
-            return board[end_row][end_col] is not None and board[end_row][end_col].color != self.color
-        return False
 
+        # Ensure the pawn is not moving backward
+        # White pawns should move to a lower row index, black pawns to a higher row index
+        if (self.color == 'white' and end_row >= start_row) or (self.color == 'black' and end_row <= start_row):
+            return False
+
+        # Single square move forward
+        if start_col == end_col:
+            # Check if moving one square forward and the destination is empty
+            if end_row - start_row == direction and board[end_row][end_col] is None:
+                return True
+
+            # Two squares move from starting position
+            if (start_row == 1 and self.color == 'black') or (start_row == 6 and self.color == 'white'):
+                # Check if both squares are empty
+                if end_row - start_row == 2 * direction and board[start_row + direction][start_col] is None and board[end_row][end_col] is None:
+                    return True
+
+        # Capture move
+        # Pawns can capture diagonally if the target contains an opponent's piece
+        if abs(start_col - end_col) == 1 and end_row - start_row == direction:
+            # Ensure there is an opponent's piece at the target position
+            return board[end_row][end_col] is not None and board[end_row][end_col].color != self.color
+
+        return False  # If none of the conditions are met, the move is invalid
+    
 class Board:
     def __init__(self):
         """
@@ -334,14 +348,55 @@ class Board:
         start_row, start_col = start
         end_row, end_col = end
         piece = self.board[start_row][start_col]
-        
-        # Check if there is a piece at the start position and if it belongs to the current player
-        if piece and piece.color == self.current_turn and piece.is_valid_move(start, end, self.board):
-            self.board[end_row][end_col] = piece  # Move the piece to the end position
-            self.board[start_row][start_col] = None  # Remove the piece from the start position
-            self.current_turn = 'black' if self.current_turn == 'white' else 'white'  # Switch turns
-            return True
-        return False  # Invalid move
+
+        if piece is None:
+            print(f"No piece at starting position {start}")
+            return False
+
+        if piece.color != self.current_turn:
+            print(f"It's {self.current_turn}'s turn, but the piece at {start} is {piece.color}")
+            return False
+
+        if not piece.is_valid_move(start, end, self.board):
+            print(f"Invalid move for {piece} from {start} to {end}")
+            return False
+
+        self.board[end_row][end_col] = piece
+        self.board[start_row][start_col] = None
+        self.current_turn = 'black' if self.current_turn == 'white' else 'white'
+        return True
+
+def parse_position(pos):
+    """
+    Converts a board position in algebraic notation (e.g., 'e2') to row and column indices.
+    
+    Args:
+        pos (str): The position in algebraic notation (e.g., 'e2').
+    
+    Returns:
+        tuple: The row and column indices (e.g., (6, 4)).
+    """
+    
+    # `ord()` function: Returns an integer representing the Unicode code point of the given character.
+    # For example, ord('a') returns 97, ord('b') returns 98, etc.
+    
+    # Convert the column letter to an index
+    # `pos[0]` extracts the first character from the string `pos`, which represents the column (e.g., 'e' from 'e2').
+    # `ord(pos[0])` converts the column character to its Unicode code point.
+    # `ord('a')` is 97, so to convert 'a' to 0, 'b' to 1, etc., we subtract 97 from the Unicode code point.
+    # This gives us a zero-based column index.
+    col = ord(pos[0]) - ord('a')  # E.g., for 'e', `ord('e') - ord('a')` is 101 - 97 = 4
+
+    # Convert the row number to an index
+    # `pos[1]` extracts the second character from the string `pos`, which represents the row (e.g., '2' from 'e2').
+    # `int(pos[1])` converts this character to an integer.
+    # Chess boards are typically represented in algebraic notation with rows 1 to 8, bottom to top.
+    # In our 2D list representing the board, however, row indices are 0 to 7, top to bottom.
+    # To convert from the 1-8 system to the 0-7 system, we subtract the row number from 8.
+    row = 8 - int(pos[1])  # E.g., for '2', `8 - int('2')` is 8 - 2 = 6
+    
+    # Return the computed row and column indices as a tuple
+    return row, col
 
 def main():
     """
@@ -356,7 +411,8 @@ def main():
             start, end = move.split()
             start_pos = parse_position(start)
             end_pos = parse_position(end)
-            print(f"Move from {start_pos} to {end_pos}")  # For demonstration
+            if not board.move_piece(start_pos, end_pos):
+                print("Invalid move, try again.")
         except ValueError:
             print("Invalid input format, please use the format 'e2 e4'.")
 
