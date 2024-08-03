@@ -1,3 +1,82 @@
+class ChessPiece:
+    def __init__(self, color):
+        """
+        Constructor for the ChessPiece class.
+        
+        Args:
+            color (str): The color of the piece ('white' or 'black').
+        """
+        self.color = color
+
+    def __str__(self):
+        """
+        String representation of the piece. This should be overridden by subclasses.
+        
+        Returns:
+            str: The string representation of the piece.
+        """
+        return 'Piece'
+
+class King(ChessPiece):
+    def __str__(self):
+        """
+        String representation of the King piece.
+        
+        Returns:
+            str: 'K' for white king, 'k' for black king.
+        """
+        return 'K' if self.color == 'white' else 'k'
+
+class Queen(ChessPiece):
+    def __str__(self):
+        """
+        String representation of the Queen piece.
+        
+        Returns:
+            str: 'Q' for white queen, 'q' for black queen.
+        """
+        return 'Q' if self.color == 'white' else 'q'
+
+class Rook(ChessPiece):
+    def __str__(self):
+        """
+        String representation of the Rook piece.
+        
+        Returns:
+            str: 'R' for white rook, 'r' for black rook.
+        """
+        return 'R' if self.color == 'white' else 'r'
+
+class Bishop(ChessPiece):
+    def __str__(self):
+        """
+        String representation of the Bishop piece.
+        
+        Returns:
+            str: 'B' for white bishop, 'b' for black bishop.
+        """
+        return 'B' if self.color == 'white' else 'b'
+
+class Knight(ChessPiece):
+    def __str__(self):
+        """
+        String representation of the Knight piece.
+        
+        Returns:
+            str: 'N' for white knight, 'n' for black knight.
+        """
+        return 'N' if self.color == 'white' else 'n'
+
+class Pawn(ChessPiece):
+    def __str__(self):
+        """
+        String representation of the Pawn piece.
+        
+        Returns:
+            str: 'P' for white pawn, 'p' for black pawn.
+        """
+        return 'P' if self.color == 'white' else 'p'
+
 class Board:
     def __init__(self):
         """
@@ -9,22 +88,22 @@ class Board:
     def create_initial_board(self):
         """
         Creates an 8x8 grid to represent the chessboard.
-        Each square on the board is initialized to a placeholder string representing
+        Each square on the board is initialized to a ChessPiece object representing
         the pieces in their starting positions.
 
         Returns:
-            list: A 2D list (8x8 grid) representing the chessboard with piece placeholders.
+            list: A 2D list (8x8 grid) representing the chessboard with piece objects.
         """
         # Initialize an empty 8x8 grid
         board = [[None for _ in range(8)] for _ in range(8)]
         
         # Place black pieces in the first two rows
-        board[0] = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
-        board[1] = ['p' for _ in range(8)]
+        board[0] = [Rook('black'), Knight('black'), Bishop('black'), Queen('black'), King('black'), Bishop('black'), Knight('black'), Rook('black')]
+        board[1] = [Pawn('black') for _ in range(8)]
         
         # Place white pieces in the last two rows
-        board[6] = ['P' for _ in range(8)]
-        board[7] = ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+        board[6] = [Pawn('white') for _ in range(8)]
+        board[7] = [Rook('white'), Knight('white'), Bishop('white'), Queen('white'), King('white'), Bishop('white'), Knight('white'), Rook('white')]
         
         return board
 
