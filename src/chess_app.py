@@ -40,23 +40,106 @@ class Queen(ChessPiece):
 class Rook(ChessPiece):
     def __str__(self):
         """
-        String representation of the Rook piece.
+        Returns the string representation of the Rook piece.
         
         Returns:
-            str: 'R' for white rook, 'r' for black rook.
+            str: 'R' for a white rook, 'r' for a black rook.
         """
         return 'R' if self.color == 'white' else 'r'
+
+    def is_valid_move(self, start, end, board):
+        """
+        Validate if the move is valid for the Rook piece.
+        Rook moves any number of squares along a row or column.
+        
+        Args:
+            start (tuple): The starting position of the piece (row, col).
+            end (tuple): The ending position of the piece (row, col).
+            board (list): The current state of the board.
+        
+        Returns:
+            bool: True if the move is valid, False otherwise.
+        """
+        # Check if the move is in the same row or column.
+        # Rooks can only move in straight lines horizontally or vertically.
+        if start[0] != end[0] and start[1] != end[1]:
+            return False
+
+        # Ensure the path between start and end is clear.
+        # This involves checking all squares between the start and end positions
+        # to ensure there are no pieces in the way.
+        
+        if start[0] == end[0]:  # Horizontal move
+            # Determine the direction of movement.
+            # If moving to the right, step is +1. If moving to the left, step is -1.
+            step = 1 if start[1] < end[1] else -1
+            
+            # Loop through all columns between start and end (exclusive) and check if they are empty.
+            for col in range(start[1] + step, end[1], step):
+                if board[start[0]][col] is not None:
+                    return False  # There is a piece in the way.
+        else:  # Vertical move
+            # Determine the direction of movement.
+            # If moving upwards, step is +1. If moving downwards, step is -1.
+            step = 1 if start[0] < end[0] else -1
+            
+            # Loop through all rows between start and end (exclusive) and check if they are empty.
+            for row in range(start[0] + step, end[0], step):
+                if board[row][start[1]] is not None:
+                    return False  # There is a piece in the way.
+
+        # If all checks pass, the move is valid.
+        return True
 
 class Bishop(ChessPiece):
     def __str__(self):
         """
-        String representation of the Bishop piece.
+        Returns the string representation of the Bishop piece.
         
         Returns:
-            str: 'B' for white bishop, 'b' for black bishop.
+            str: 'B' for a white bishop, 'b' for a black bishop.
         """
         return 'B' if self.color == 'white' else 'b'
 
+    def is_valid_move(self, start, end, board):
+        """
+        Validate if the move is valid for the Bishop piece.
+        Bishop moves any number of squares diagonally.
+        
+        Args:
+            start (tuple): The starting position of the piece (row, col).
+            end (tuple): The ending position of the piece (row, col).
+            board (list): The current state of the board.
+        
+        Returns:
+            bool: True if the move is valid, False otherwise.
+        """
+        # Calculate the difference in rows and columns between the start and end positions.
+        # Bishops move diagonally, so the absolute difference between the row and column
+        # indices must be the same for a move to be diagonal.
+        row_diff = abs(start[0] - end[0])
+        col_diff = abs(start[1] - end[1])
+        
+        # If the move is not diagonal, it is invalid.
+        if row_diff != col_diff:
+            return False
+
+        # Ensure the path between start and end is clear.
+        # This involves checking all squares along the diagonal path between
+        # the start and end positions to ensure there are no pieces in the way.
+        
+        # Determine the direction of movement.
+        # row_step and col_step will be +1 or -1 depending on the direction.
+        row_step = 1 if start[0] < end[0] else -1
+        col_step = 1 if start[1] < end[1] else -1
+        
+        # Loop through all squares between start and end (exclusive) and check if they are empty.
+        for i in range(1, row_diff):
+            if board[start[0] + i * row_step][start[1] + i * col_step] is not None:
+                return False  # There is a piece in the way.
+
+        # If all checks pass, the move is valid.
+        return True
 class Knight(ChessPiece):
     def __str__(self):
         """
