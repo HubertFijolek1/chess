@@ -80,31 +80,29 @@ class Pawn(ChessPiece):
 class Board:
     def __init__(self):
         """
-        Constructor for the Board class.
-        Initializes the chessboard by calling the create_initial_board method.
+        Initializes the chessboard with pieces in their initial positions.
+        Sets the current turn to 'white'.
         """
         self.board = self.create_initial_board()
+        self.current_turn = 'white'
 
     def create_initial_board(self):
         """
-        Creates an 8x8 grid to represent the chessboard.
-        Each square on the board is initialized to a ChessPiece object representing
-        the pieces in their starting positions.
-
+        Creates an 8x8 grid representing the chessboard.
+        Places pieces in their starting positions.
+        
         Returns:
             list: A 2D list (8x8 grid) representing the chessboard with piece objects.
         """
-        # Initialize an empty 8x8 grid
         board = [[None for _ in range(8)] for _ in range(8)]
-        
-        # Place black pieces in the first two rows
-        board[0] = [Rook('black'), Knight('black'), Bishop('black'), Queen('black'), King('black'), Bishop('black'), Knight('black'), Rook('black')]
+        board[0] = [Rook('black'), Knight('black'), Bishop('black'), Queen('black'),
+                    King('black'), Bishop('black'), Knight('black'), Rook('black')]
         board[1] = [Pawn('black') for _ in range(8)]
         
         # Place white pieces in the last two rows
         board[6] = [Pawn('white') for _ in range(8)]
-        board[7] = [Rook('white'), Knight('white'), Bishop('white'), Queen('white'), King('white'), Bishop('white'), Knight('white'), Rook('white')]
-        
+        board[7] = [Rook('white'), Knight('white'), Bishop('white'), Queen('white'),
+                    King('white'), Bishop('white'), Knight('white'), Rook('white')]
         return board
 
     def display(self):
@@ -123,21 +121,42 @@ class Board:
             
             # Print each piece in the row or a '.' if the square is empty
             for piece in row:
-                print('.' if piece is None else piece, end=" ")
-            
-            # Print row label on the right side (same as the left for symmetry)
+                print('.' if piece is None else str(piece), end=" ")
             print(8 - row_index)
         
         # Print column labels at the bottom of the board
         print("  a b c d e f g h")
 
+def parse_position(pos):
+    """
+    Converts a board position in algebraic notation (e.g., 'e2') to row and column indices.
+    
+    Args:
+        pos (str): The position in algebraic notation.
+    
+    Returns:
+        tuple: The row and column indices.
+    """
+    col = ord(pos[0]) - ord('a')
+    row = 8 - int(pos[1])
+    return row, col
+
 def main():
     """
-    Main function to create a Board object and display its initial state.
-    This function is executed when the script is run directly.
+    Main function to create a Board object and handle user input for moves.
+    Uses a loop to display the board and process moves.
     """
-    board = Board()  # Create a new Board object
-    board.display()  # Display the current state of the board
+    board = Board()
+    while True:
+        board.display()
+        move = input(f"{board.current_turn}'s move (e.g., e2 e4): ")
+        try:
+            start, end = move.split()
+            start_pos = parse_position(start)
+            end_pos = parse_position(end)
+            print(f"Move from {start_pos} to {end_pos}")  # For demonstration
+        except ValueError:
+            print("Invalid input format, please use the format 'e2 e4'.")
 
 if __name__ == "__main__":
-    main()  # Call the main function if this script is executed
+    main()
