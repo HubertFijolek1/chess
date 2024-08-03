@@ -84,7 +84,7 @@ class Board:
         Sets the current turn to 'white'.
         """
         self.board = self.create_initial_board()
-        self.current_turn = 'white'
+        self.current_turn = 'white'  # Track the current player's turn
 
     def create_initial_board(self):
         """
@@ -127,18 +127,59 @@ class Board:
         # Print column labels at the bottom of the board
         print("  a b c d e f g h")
 
+    def move_piece(self, start, end):
+        """
+        Moves a piece from the start position to the end position on the board
+        if the move is valid according to the piece's movement rules.
+
+        Args:
+            start (tuple): The starting position of the piece (row, col).
+            end (tuple): The ending position of the piece (row, col).
+
+        Returns:
+            bool: True if the move was successful, False otherwise.
+        """
+        start_row, start_col = start
+        end_row, end_col = end
+        piece = self.board[start_row][start_col]
+        
+        # Check if there is a piece at the start position and if it belongs to the current player
+        if piece and piece.color == self.current_turn:
+            self.board[end_row][end_col] = piece  # Move the piece to the end position
+            self.board[start_row][start_col] = None  # Remove the piece from the start position
+            self.current_turn = 'black' if self.current_turn == 'white' else 'white'  # Switch turns
+            return True
+        return False  # Invalid move
 def parse_position(pos):
     """
     Converts a board position in algebraic notation (e.g., 'e2') to row and column indices.
     
     Args:
-        pos (str): The position in algebraic notation.
+        pos (str): The position in algebraic notation (e.g., 'e2').
     
     Returns:
-        tuple: The row and column indices.
+        tuple: The row and column indices (e.g., (6, 4)).
     """
-    col = ord(pos[0]) - ord('a')
-    row = 8 - int(pos[1])
+    
+    # `ord()` function: Returns an integer representing the Unicode code point of the given character.
+    # For example, ord('a') returns 97, ord('b') returns 98, etc.
+    
+    # Convert the column letter to an index
+    # `pos[0]` extracts the first character from the string `pos`, which represents the column (e.g., 'e' from 'e2').
+    # `ord(pos[0])` converts the column character to its Unicode code point.
+    # `ord('a')` is 97, so to convert 'a' to 0, 'b' to 1, etc., we subtract 97 from the Unicode code point.
+    # This gives us a zero-based column index.
+    col = ord(pos[0]) - ord('a')  # E.g., for 'e', `ord('e') - ord('a')` is 101 - 97 = 4
+
+    # Convert the row number to an index
+    # `pos[1]` extracts the second character from the string `pos`, which represents the row (e.g., '2' from 'e2').
+    # `int(pos[1])` converts this character to an integer.
+    # Chess boards are typically represented in algebraic notation with rows 1 to 8, bottom to top.
+    # In our 2D list representing the board, however, row indices are 0 to 7, top to bottom.
+    # To convert from the 1-8 system to the 0-7 system, we subtract the row number from 8.
+    row = 8 - int(pos[1])  # E.g., for '2', `8 - int('2')` is 8 - 2 = 6
+    
+    # Return the computed row and column indices as a tuple
     return row, col
 
 def main():
