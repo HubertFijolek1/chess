@@ -20,22 +20,83 @@ class ChessPiece:
 class King(ChessPiece):
     def __str__(self):
         """
-        String representation of the King piece.
+        Returns the string representation of the King piece.
         
         Returns:
-            str: 'K' for white king, 'k' for black king.
+            str: 'K' for a white king, 'k' for a black king.
         """
         return 'K' if self.color == 'white' else 'k'
+
+    def is_valid_move(self, start, end, board):
+        """
+        Validate if the move is valid for the King piece.
+        King moves one square in any direction.
+        
+        Args:
+            start (tuple): The starting position of the piece (row, col).
+            end (tuple): The ending position of the piece (row, col).
+            board (list): The current state of the board.
+        
+        Returns:
+            bool: True if the move is valid, False otherwise.
+        """
+        # Calculate the difference in rows and columns between the start and end positions.
+        row_diff = abs(start[0] - end[0])
+        col_diff = abs(start[1] - end[1])
+        
+        # King moves one square in any direction, so row and column differences must both be <= 1.
+        return row_diff <= 1 and col_diff <= 1
 
 class Queen(ChessPiece):
     def __str__(self):
         """
-        String representation of the Queen piece.
+        Returns the string representation of the Queen piece.
         
         Returns:
-            str: 'Q' for white queen, 'q' for black queen.
+            str: 'Q' for a white queen, 'q' for a black queen.
         """
         return 'Q' if self.color == 'white' else 'q'
+
+    def is_valid_move(self, start, end, board):
+        """
+        Validate if the move is valid for the Queen piece.
+        Queen moves any number of squares along a row, column, or diagonal.
+        
+        Args:
+            start (tuple): The starting position of the piece (row, col).
+            end (tuple): The ending position of the piece (row, col).
+            board (list): The current state of the board.
+        
+        Returns:
+            bool: True if the move is valid, False otherwise.
+        """
+        row_diff = abs(start[0] - end[0])
+        col_diff = abs(start[1] - end[1])
+        
+        # Queen moves horizontally, vertically, or diagonally.
+        # So the move is valid if it is a valid rook move or a valid bishop move.
+        if row_diff != col_diff and start[0] != end[0] and start[1] != end[1]:
+            return False
+        
+        # Ensure the path between start and end is clear.
+        if start[0] == end[0]:  # Horizontal move
+            step = 1 if start[1] < end[1] else -1
+            for col in range(start[1] + step, end[1], step):
+                if board[start[0]][col] is not None:
+                    return False
+        elif start[1] == end[1]:  # Vertical move
+            step = 1 if start[0] < end[0] else -1
+            for row in range(start[0] + step, end[0], step):
+                if board[row][start[1]] is not None:
+                    return False
+        else:  # Diagonal move
+            row_step = 1 if start[0] < end[0] else -1
+            col_step = 1 if start[1] < end[1] else -1
+            for i in range(1, row_diff):
+                if board[start[0] + i * row_step][start[1] + i * col_step] is not None:
+                    return False
+
+        return True
 
 class Rook(ChessPiece):
     def __str__(self):
