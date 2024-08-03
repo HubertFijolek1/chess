@@ -204,22 +204,72 @@ class Bishop(ChessPiece):
 class Knight(ChessPiece):
     def __str__(self):
         """
-        String representation of the Knight piece.
+        Returns the string representation of the Knight piece.
         
         Returns:
-            str: 'N' for white knight, 'n' for black knight.
+            str: 'N' for a white knight, 'n' for a black knight.
         """
         return 'N' if self.color == 'white' else 'n'
+
+    def is_valid_move(self, start, end, board):
+        """
+        Validate if the move is valid for the Knight piece.
+        Knight moves in an L-shape: two squares in one direction and then one square perpendicular.
+        
+        Args:
+            start (tuple): The starting position of the piece (row, col).
+            end (tuple): The ending position of the piece (row, col).
+            board (list): The current state of the board.
+        
+        Returns:
+            bool: True if the move is valid, False otherwise.
+        """
+        row_diff = abs(start[0] - end[0])
+        col_diff = abs(start[1] - end[1])
+        
+        # Knight moves in an L-shape: two squares in one direction and then one square perpendicular.
+        # Therefore, the row and column differences must be either (2, 1) or (1, 2).
+        return (row_diff == 2 and col_diff == 1) or (row_diff == 1 and col_diff == 2)
 
 class Pawn(ChessPiece):
     def __str__(self):
         """
-        String representation of the Pawn piece.
+        Returns the string representation of the Pawn piece.
         
         Returns:
-            str: 'P' for white pawn, 'p' for black pawn.
+            str: 'P' for a white pawn, 'p' for a black pawn.
         """
         return 'P' if self.color == 'white' else 'p'
+
+    def is_valid_move(self, start, end, board):
+        """
+        Validate if the move is valid for the Pawn piece.
+        Pawn moves forward one square, with the option to move two squares on their first move.
+        Pawns capture diagonally.
+        
+        Args:
+            start (tuple): The starting position of the piece (row, col).
+            end (tuple): The ending position of the piece (row, col).
+            board (list): The current state of the board.
+        
+        Returns:
+            bool: True if the move is valid, False otherwise.
+        """
+        direction = 1 if self.color == 'white' else -1
+        start_row, start_col = start
+        end_row, end_col = end
+        
+        # Move forward one square
+        if start_col == end_col:
+            if end_row - start_row == direction:
+                return board[end_row][end_col] is None
+            # Move forward two squares from starting position
+            if (start_row == 1 and self.color == 'black') or (start_row == 6 and self.color == 'white'):
+                return end_row - start_row == 2 * direction and board[end_row][end_col] is None
+        # Capture diagonally
+        if abs(start_col - end_col) == 1 and end_row - start_row == direction:
+            return board[end_row][end_col] is not None and board[end_row][end_col].color != self.color
+        return False
 
 class Board:
     def __init__(self):
@@ -234,9 +284,9 @@ class Board:
         """
         Creates an 8x8 grid representing the chessboard.
         Places pieces in their starting positions.
-        
+
         Returns:
-            list: A 2D list (8x8 grid) representing the chessboard with piece objects.
+            list: 2D list representing the chessboard with pieces.
         """
         board = [[None for _ in range(8)] for _ in range(8)]
         board[0] = [Rook('black'), Knight('black'), Bishop('black'), Queen('black'),
@@ -252,8 +302,6 @@ class Board:
     def display(self):
         """
         Prints the current state of the chessboard to the console.
-        Empty squares are represented by '.', and pieces are represented
-        by their respective placeholders.
         """
         # Print column labels at the top of the board
         print("  a b c d e f g h")
@@ -288,43 +336,12 @@ class Board:
         piece = self.board[start_row][start_col]
         
         # Check if there is a piece at the start position and if it belongs to the current player
-        if piece and piece.color == self.current_turn:
+        if piece and piece.color == self.current_turn and piece.is_valid_move(start, end, self.board):
             self.board[end_row][end_col] = piece  # Move the piece to the end position
             self.board[start_row][start_col] = None  # Remove the piece from the start position
             self.current_turn = 'black' if self.current_turn == 'white' else 'white'  # Switch turns
             return True
         return False  # Invalid move
-def parse_position(pos):
-    """
-    Converts a board position in algebraic notation (e.g., 'e2') to row and column indices.
-    
-    Args:
-        pos (str): The position in algebraic notation (e.g., 'e2').
-    
-    Returns:
-        tuple: The row and column indices (e.g., (6, 4)).
-    """
-    
-    # `ord()` function: Returns an integer representing the Unicode code point of the given character.
-    # For example, ord('a') returns 97, ord('b') returns 98, etc.
-    
-    # Convert the column letter to an index
-    # `pos[0]` extracts the first character from the string `pos`, which represents the column (e.g., 'e' from 'e2').
-    # `ord(pos[0])` converts the column character to its Unicode code point.
-    # `ord('a')` is 97, so to convert 'a' to 0, 'b' to 1, etc., we subtract 97 from the Unicode code point.
-    # This gives us a zero-based column index.
-    col = ord(pos[0]) - ord('a')  # E.g., for 'e', `ord('e') - ord('a')` is 101 - 97 = 4
-
-    # Convert the row number to an index
-    # `pos[1]` extracts the second character from the string `pos`, which represents the row (e.g., '2' from 'e2').
-    # `int(pos[1])` converts this character to an integer.
-    # Chess boards are typically represented in algebraic notation with rows 1 to 8, bottom to top.
-    # In our 2D list representing the board, however, row indices are 0 to 7, top to bottom.
-    # To convert from the 1-8 system to the 0-7 system, we subtract the row number from 8.
-    row = 8 - int(pos[1])  # E.g., for '2', `8 - int('2')` is 8 - 2 = 6
-    
-    # Return the computed row and column indices as a tuple
-    return row, col
 
 def main():
     """
