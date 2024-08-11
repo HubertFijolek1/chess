@@ -1,7 +1,6 @@
 from board import Board
 from utils import parse_position
 
-
 def main():
     """
     Main function to run the chess game. Continuously prompts the user for moves and updates the board.
