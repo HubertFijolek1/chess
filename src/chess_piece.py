@@ -166,6 +166,7 @@ class Pawn(ChessPiece):
                 # Move two squares forward from starting position if both intermediate and end positions are empty
                 return board[end_row][end_col] is None and board[start_row + direction][start_col] is None
 
+
         if abs(start_col - end_col) == 1 and end_row == start_row + direction:
             # Move diagonally if capturing an opponent's piece
             return board[end_row][end_col] is not None and board[end_row][end_col].color != self.color
