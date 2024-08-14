@@ -135,6 +135,7 @@ class Rook(ChessPiece):
             return self.can_move_to(end, board)  # Rook moves any number of squares along a row or column
         return False
 
+
 class Pawn(ChessPiece):
     def __str__(self):
         return 'P' if self.color == 'white' else 'p'  # String representation for Pawn
