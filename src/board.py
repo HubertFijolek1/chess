@@ -29,9 +29,10 @@ class Board:
         """
         print("  a b c d e f g h")  # Print column headers
         for row in range(8):
-            row_display = [str(piece) if piece else '.' for piece in self.board[row]]  # Generate row display
+            row_display = [str(piece) if piece else '.' for piece in self.grid[row]]  # Generate row display
             print(f"{8 - row} {' '.join(row_display)} {8 - row}")  # Print row with row numbers on both sides
         print("  a b c d e f g h")  # Print column headers
+
 
     def is_path_clear(self, start: tuple, end: tuple) -> bool:
         """

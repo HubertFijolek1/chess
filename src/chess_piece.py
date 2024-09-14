@@ -21,25 +21,17 @@ class ChessPiece:
 
 class King(ChessPiece):
     def __str__(self):
-        return 'K' if self.color == 'white' else 'k'  # String representation for King
+        return 'K' if self.color == WHITE else 'k'  # String representation for King
 
     def is_valid_move(self, start, end, board):
         """
         Checks if the King can move from start to end position.
-        
-        Parameters:
-        start (tuple): Start position (row, col)
-        end (tuple): End position (row, col)
-        board (list): Current state of the board
-        
-        Returns:
-        bool: True if the move is valid, False otherwise
         """
         start_row, start_col = start
         end_row, end_col = end
         row_diff = abs(start_row - end_row)
         col_diff = abs(start_col - end_col)
-        return max(row_diff, col_diff) == 1 and self.can_move_to(end, board)  # King moves one square in any direction
+        return max(row_diff, col_diff) == 1 and self.can_capture_or_move_to(end, board)
 
 class Rook(ChessPiece):
     def is_valid_move(self, start: tuple, end: tuple, board) -> bool:
@@ -81,25 +73,17 @@ class Queen(ChessPiece):
 
 class Knight(ChessPiece):
     def __str__(self):
-        return 'N' if self.color == 'white' else 'n'  # String representation for Knight
+        return 'N' if self.color == WHITE else 'n'  # String representation for Knight
 
     def is_valid_move(self, start, end, board):
         """
         Checks if the Knight can move from start to end position.
-        
-        Parameters:
-        start (tuple): Start position (row, col)
-        end (tuple): End position (row, col)
-        board (list): Current state of the board
-        
-        Returns:
-        bool: True if the move is valid, False otherwise
         """
         start_row, start_col = start
         end_row, end_col = end
         row_diff = abs(start_row - end_row)
         col_diff = abs(start_col - end_col)
-        return row_diff * col_diff == 2 and self.can_move_to(end, board)  # Knight moves in an L-shape (2, 1) or (1, 2)
+        return row_diff * col_diff == 2 and self.can_capture_or_move_to(end, board)
 
 class Pawn(ChessPiece):
     def is_valid_move(self, start: tuple, end: tuple, board) -> bool:
