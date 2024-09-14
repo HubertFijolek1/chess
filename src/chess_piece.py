@@ -34,6 +34,9 @@ class King(ChessPiece):
         return max(row_diff, col_diff) == 1 and self.can_capture_or_move_to(end, board)
 
 class Rook(ChessPiece):
+    def __str__(self) -> str:
+        return 'R' if self.color == WHITE else 'r'  # 'R' for white rook, 'r' for black rook
+    
     def is_valid_move(self, start: tuple, end: tuple, board) -> bool:
         """
         Checks if the Rook can move from start to end position.
@@ -46,6 +49,9 @@ class Rook(ChessPiece):
         return False
 
 class Bishop(ChessPiece):
+    def __str__(self) -> str:
+        return 'B' if self.color == WHITE else 'b'  # 'B' for white bishop, 'b' for black bishop
+    
     def is_valid_move(self, start: tuple, end: tuple, board) -> bool:
         """
         Checks if the Bishop can move from start to end position.
@@ -58,6 +64,9 @@ class Bishop(ChessPiece):
         return False
 
 class Queen(ChessPiece):
+    def __str__(self) -> str:
+        return 'Q' if self.color == WHITE else 'q'  # 'Q' for white queen, 'q' for black queen
+    
     def is_valid_move(self, start: tuple, end: tuple, board) -> bool:
         """
         Checks if the Queen can move from start to end position.
@@ -86,6 +95,9 @@ class Knight(ChessPiece):
         return row_diff * col_diff == 2 and self.can_capture_or_move_to(end, board)
 
 class Pawn(ChessPiece):
+    def __str__(self) -> str:
+        return 'P' if self.color == WHITE else 'p'  # 'P' for white pawn, 'p' for black pawn
+    
     def is_valid_move(self, start: tuple, end: tuple, board) -> bool:
         """
         Checks if the Pawn can move from start to end position.
