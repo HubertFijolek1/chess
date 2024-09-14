@@ -1,6 +1,7 @@
 from chess_piece import ChessPiece
 from constants import WHITE, BLACK
 from piece_factory import PieceFactory
+from utils import parse_position, position_to_notation  # Import the new function
 
 class Board:
     def __init__(self):
@@ -67,18 +68,23 @@ class Board:
         piece = self.grid[start_row][start_col]
 
         if piece is None:
-            print(f"No piece at starting position {start}")
+            start_notation = position_to_notation(start)
+            print(f"No piece at starting position {start_notation}")
             return False
 
         if piece.color != self.current_turn:
-            print(f"It's {self.current_turn}'s turn, but the piece at {start} is {piece.color}")
+            start_notation = position_to_notation(start)
+            print(f"It's {self.current_turn}'s turn, but the piece at {start_notation} is {piece.color}")
             return False  # It's not the player's turn
 
         if not piece.is_valid_move(start, end, self):
-            print(f"Invalid move for {piece} from {start} to {end}")
+            start_notation = position_to_notation(start)
+            end_notation = position_to_notation(end)
+            print(f"Invalid move for {piece} from {start_notation} to {end_notation}")
             return False  # The move is not valid for this piece
 
-        self.grid[end_row][end_col] = piece  # Move the piece to the new position
-        self.grid[start_row][start_col] = None  # Remove the piece from the start position
+        # Update the board state
+        self.grid[end_row][end_col] = piece
+        self.grid[start_row][start_col] = None
         self.current_turn = BLACK if self.current_turn == WHITE else WHITE  # Switch turns
         return True  # Move was successful
