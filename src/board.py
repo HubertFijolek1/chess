@@ -1,28 +1,27 @@
 from chess_piece import King, Queen, Bishop, Knight, Rook, Pawn
+from constants import WHITE, BLACK
 
 class Board:
     def __init__(self):
-        self.board = [[None for _ in range(8)] for _ in range(8)]  # Initialize an 8x8 board with None
-        self.current_turn = 'white'  # White starts first
+        self.grid = [[None for _ in range(8)] for _ in range(8)]  # Initialize an 8x8 grid with None
+        self.current_turn = WHITE  # White starts first
         self.setup_board()  # Set up the board with initial positions
 
     def setup_board(self):
         """
         Sets up the board with initial positions for all pieces.
         """
-        for col in range(8):
-            self.board[1][col] = Pawn('black')
-            self.board[6][col] = Pawn('white')
-        self.board[0][0] = self.board[0][7] = Rook('black')
-        self.board[0][1] = self.board[0][6] = Knight('black')
-        self.board[0][2] = self.board[0][5] = Bishop('black')
-        self.board[0][3] = Queen('black')
-        self.board[0][4] = King('black')
-        self.board[7][0] = self.board[7][7] = Rook('white')
-        self.board[7][1] = self.board[7][6] = Knight('white')
-        self.board[7][2] = self.board[7][5] = Bishop('white')
-        self.board[7][3] = Queen('white')
-        self.board[7][4] = King('white')
+        back_rank = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
+
+        # Set up black pieces
+        for col, piece_class in enumerate(back_rank):
+            self.grid[0][col] = piece_class(BLACK)
+            self.grid[1][col] = Pawn(BLACK)
+
+        # Set up white pieces
+        for col, piece_class in enumerate(back_rank):
+            self.grid[7][col] = piece_class(WHITE)
+            self.grid[6][col] = Pawn(WHITE)
 
     def display(self):
         """
