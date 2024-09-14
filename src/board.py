@@ -7,7 +7,7 @@ class Board:
         self.current_turn = WHITE  # White starts first
         self.setup_board()  # Set up the board with initial positions
 
-    def setup_board(self):
+    def setup_board(self) -> None:
         """
         Sets up the board with initial positions for all pieces.
         """
@@ -23,7 +23,7 @@ class Board:
             self.grid[7][col] = piece_class(WHITE)
             self.grid[6][col] = Pawn(WHITE)
 
-    def display(self):
+    def display(self) -> None:
         """
         Displays the current state of the board with column letters and row numbers.
         """
@@ -33,7 +33,7 @@ class Board:
             print(f"{8 - row} {' '.join(row_display)} {8 - row}")  # Print row with row numbers on both sides
         print("  a b c d e f g h")  # Print column headers
 
-    def is_path_clear(self, start, end):
+    def is_path_clear(self, start: tuple, end: tuple) -> bool:
         """
         Checks if the path between start and end positions is clear (no pieces in between).
         """
@@ -56,7 +56,7 @@ class Board:
 
         return True  # Path is clear
 
-    def move_piece(self, start, end):
+    def move_piece(self, start: tuple, end: tuple) -> bool:
         """
         Moves a piece from the start position to the end position if the move is valid.
         """
