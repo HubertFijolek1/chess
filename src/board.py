@@ -1,5 +1,6 @@
-from chess_piece import King, Queen, Bishop, Knight, Rook, Pawn
+from chess_piece import ChessPiece
 from constants import WHITE, BLACK
+from piece_factory import PieceFactory
 
 class Board:
     def __init__(self):
@@ -11,17 +12,17 @@ class Board:
         """
         Sets up the board with initial positions for all pieces.
         """
-        back_rank = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
+        back_rank_symbols = ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
 
         # Set up black pieces
-        for col, piece_class in enumerate(back_rank):
-            self.grid[0][col] = piece_class(BLACK)
-            self.grid[1][col] = Pawn(BLACK)
+        for col, symbol in enumerate(back_rank_symbols):
+            self.grid[0][col] = PieceFactory.create_piece(symbol, BLACK)
+            self.grid[1][col] = PieceFactory.create_piece('P', BLACK)
 
         # Set up white pieces
-        for col, piece_class in enumerate(back_rank):
-            self.grid[7][col] = piece_class(WHITE)
-            self.grid[6][col] = Pawn(WHITE)
+        for col, symbol in enumerate(back_rank_symbols):
+            self.grid[7][col] = PieceFactory.create_piece(symbol, WHITE)
+            self.grid[6][col] = PieceFactory.create_piece('P', WHITE)
 
     def display(self) -> None:
         """
