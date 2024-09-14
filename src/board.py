@@ -33,20 +33,36 @@ class Board:
             print(f"{8 - row} {' '.join(row_display)} {8 - row}")  # Print row with row numbers on both sides
         print("  a b c d e f g h")  # Print column headers
 
-    def move_piece(self, start, end):
+    def is_path_clear(self, start, end):
         """
-        Moves a piece from the start position to the end position if the move is valid.
-        
-        Parameters:
-        start (tuple): Start position (row, col)
-        end (tuple): End position (row, col)
-        
-        Returns:
-        bool: True if the move is successful, False otherwise
+        Checks if the path between start and end positions is clear (no pieces in between).
         """
         start_row, start_col = start
         end_row, end_col = end
-        piece = self.board[start_row][start_col]
+        delta_row = end_row - start_row
+        delta_col = end_col - start_col
+
+        step_row = (delta_row // abs(delta_row)) if delta_row != 0 else 0
+        step_col = (delta_col // abs(delta_col)) if delta_col != 0 else 0
+
+        current_row = start_row + step_row
+        current_col = start_col + step_col
+
+        while (current_row, current_col) != (end_row, end_col):
+            if self.grid[current_row][current_col] is not None:
+                return False  # Path is blocked
+            current_row += step_row
+            current_col += step_col
+
+        return True  # Path is clear
+
+    def move_piece(self, start, end):
+        """
+        Moves a piece from the start position to the end position if the move is valid.
+        """
+        start_row, start_col = start
+        end_row, end_col = end
+        piece = self.grid[start_row][start_col]
 
         if piece is None:
             print(f"No piece at starting position {start}")
@@ -54,13 +70,13 @@ class Board:
 
         if piece.color != self.current_turn:
             print(f"It's {self.current_turn}'s turn, but the piece at {start} is {piece.color}")
-            return False  # Move is invalid if it's not the piece's turn
+            return False  # It's not the player's turn
 
-        if not piece.is_valid_move(start, end, self.board):
+        if not piece.is_valid_move(start, end, self):
             print(f"Invalid move for {piece} from {start} to {end}")
-            return False  # Move is invalid if the piece cannot legally move to the end position
+            return False  # The move is not valid for this piece
 
-        self.board[end_row][end_col] = piece  # Move the piece to the new position
-        self.board[start_row][start_col] = None  # Remove the piece from the start position
-        self.current_turn = 'black' if self.current_turn == 'white' else 'white'  # Switch turns
+        self.grid[end_row][end_col] = piece  # Move the piece to the new position
+        self.grid[start_row][start_col] = None  # Remove the piece from the start position
+        self.current_turn = BLACK if self.current_turn == WHITE else WHITE  # Switch turns
         return True  # Move was successful
