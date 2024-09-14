@@ -102,39 +102,29 @@ class Knight(ChessPiece):
         return row_diff * col_diff == 2 and self.can_move_to(end, board)  # Knight moves in an L-shape (2, 1) or (1, 2)
 
 class Pawn(ChessPiece):
-    def __str__(self):
-        return 'P' if self.color == 'white' else 'p'  # String representation for Pawn
-
-    def is_valid_move(self, start, end, board):
+    def is_valid_move(self, start: tuple, end: tuple, board) -> bool:
         """
         Checks if the Pawn can move from start to end position.
-        
-        Parameters:
-        start (tuple): Start position (row, col)
-        end (tuple): End position (row, col)
-        board (list): Current state of the board
-        
-        Returns:
-        bool: True if the move is valid, False otherwise
         """
         start_row, start_col = start
         end_row, end_col = end
 
-        # Determine direction based on color
-        direction = -1 if self.color == 'white' else 1
-        # Determine starting row based on color
-        start_row_standard = 6 if self.color == 'white' else 1
+        # Determine direction and starting row based on color
+        direction = -1 if self.color == WHITE else 1
+        start_row_standard = 6 if self.color == WHITE else 1
 
+        # Move forward
         if start_col == end_col:
-            if end_row == start_row + direction:
-                return board[end_row][end_col] is None  # Move one square forward if the end position is empty
+            if end_row == start_row + direction and board.grid[end_row][end_col] is None:
+                return True  # Move one square forward
             if start_row == start_row_standard and end_row == start_row + 2 * direction:
-                # Move two squares forward from starting position if both intermediate and end positions are empty
-                return board[end_row][end_col] is None and board[start_row + direction][start_col] is None
+                if board.grid[start_row + direction][start_col] is None and board.grid[end_row][end_col] is None:
+                    return True  # Move two squares forward from starting position
 
+        # Capture diagonally
+        if abs(end_col - start_col) == 1 and end_row == start_row + direction:
+            target_piece = board.grid[end_row][end_col]
+            if target_piece is not None and target_piece.color != self.color:
+                return True  # Capture opponent's piece
 
-        if abs(start_col - end_col) == 1 and end_row == start_row + direction:
-            # Move diagonally if capturing an opponent's piece
-            return board[end_row][end_col] is not None and board[end_row][end_col].color != self.color
-        
-        return False
+        return False  # Invalid move
