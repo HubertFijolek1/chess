@@ -1,5 +1,6 @@
 from board import Board
 from utils import parse_position
+from constants import WHITE, BLACK
 
 def main():
     """
@@ -10,7 +11,7 @@ def main():
         board.display()  # Display the current board
         move = input(f"{board.current_turn}'s move (e.g., e2 e4): ")  # Prompt user for move
         try:
-            start, end = move.split()  # Split the input into start and end positions
+            start, end = move.strip().split()  # Split the input into start and end positions
             start_pos = parse_position(start)  # Parse start position
             end_pos = parse_position(end)  # Parse end position
             if not board.move_piece(start_pos, end_pos):  # Attempt to move the piece
