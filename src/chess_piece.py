@@ -1,11 +1,17 @@
+from abc import ABC, abstractmethod
 from constants import WHITE, BLACK
 
-class ChessPiece:
+class ChessPiece(ABC):
     def __init__(self, color: str):
         self.color = color  # Color of the piece (WHITE or BLACK)
 
+    @abstractmethod
     def __str__(self) -> str:
-        return 'Piece'  # Default string representation of a piece
+        pass  # Must be implemented by subclasses
+
+    @abstractmethod
+    def is_valid_move(self, start: tuple, end: tuple, board) -> bool:
+        pass  # Must be implemented by subclasses
 
     def can_capture_or_move_to(self, end: tuple, board) -> bool:
         """
