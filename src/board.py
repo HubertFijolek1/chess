@@ -60,9 +60,6 @@ class Board:
         return True  # Path is clear
 
     def move_piece(self, start: tuple, end: tuple) -> bool:
-        """
-        Moves a piece from the start position to the end position if the move is valid.
-        """
         start_row, start_col = start
         end_row, end_col = end
         piece = self.grid[start_row][start_col]
@@ -82,6 +79,11 @@ class Board:
             end_notation = position_to_notation(end)
             print(f"Invalid move for {piece} from {start_notation} to {end_notation}")
             return False  # The move is not valid for this piece
+
+        # Handle capturing logic
+        target_piece = self.grid[end_row][end_col]
+        if target_piece is not None and target_piece.color != piece.color:
+            print(f"{piece} captures {target_piece} at {position_to_notation(end)}")
 
         # Update the board state
         self.grid[end_row][end_col] = piece
