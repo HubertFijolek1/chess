@@ -1,5 +1,3 @@
-# board.py
-
 from chess_piece import King, Queen, Rook, Bishop, Knight, Pawn
 from constants import WHITE, BLACK
 from piece_factory import PieceFactory
@@ -45,6 +43,12 @@ class Board:
     def is_in_check(self, color: str) -> bool:
         """
         Determines if the king of the given color is in check.
+
+        Parameters:
+            color (str): The color of the king to check ('white' or 'black').
+
+        Returns:
+            bool: True if the king is in check, False otherwise.
         """
         king_position = None
 
@@ -72,10 +76,58 @@ class Board:
                         return True  # King is in check
         return False  # King is not in check
 
+    def has_legal_moves(self, color: str) -> bool:
+        """
+        Checks if the player of the given color has any legal moves left.
+
+        Parameters:
+            color (str): The color of the player ('white' or 'black').
+
+        Returns:
+            bool: True if the player has at least one legal move, False otherwise.
+        """
+        for row in range(8):
+            for col in range(8):
+                piece = self.grid[row][col]
+                if piece is not None and piece.color == color:
+                    for dest_row in range(8):
+                        for dest_col in range(8):
+                            if piece.is_valid_move((row, col), (dest_row, dest_col), self):
+                                # Simulate the move
+                                captured_piece = self.grid[dest_row][dest_col]
+                                self.grid[dest_row][dest_col] = piece
+                                self.grid[row][col] = None
+
+                                # Check if the move would leave the king in check
+                                if not self.is_in_check(color):
+                                    # Undo the move
+                                    self.grid[row][col] = piece
+                                    self.grid[dest_row][dest_col] = captured_piece
+                                    return True  # Found at least one legal move
+
+                                # Undo the move
+                                self.grid[row][col] = piece
+                                self.grid[dest_row][dest_col] = captured_piece
+        return False  # No legal moves found
+
+    def is_checkmate(self, color: str) -> bool:
+        """
+        Determines if the player of the given color is in checkmate.
+
+        Parameters:
+            color (str): The color of the player to check ('white' or 'black').
+
+        Returns:
+            bool: True if the player is in checkmate, False otherwise.
+        """
+        if self.is_in_check(color) and not self.has_legal_moves(color):
+            return True
+        return False
+
     def move_piece(self, start: tuple, end: tuple) -> bool:
         """
         Moves a piece from the start position to the end position if the move is valid and doesn't put own king in check.
-        After a successful move, checks if the opponent's king is in check and notifies the player.
+        After a successful move, checks if the opponent's king is in checkmate and ends the game if so.
 
         Parameters:
             start (tuple): Starting position (row, col).
@@ -124,9 +176,12 @@ class Board:
         # Switch turns
         self.current_turn = BLACK if self.current_turn == WHITE else WHITE  # Switch turns
 
-        # Check if the opponent's king is in check
+        # Check if the opponent's king is in checkmate
         opponent_color = BLACK if piece.color == WHITE else WHITE
-        if self.is_in_check(opponent_color):
+        if self.is_checkmate(opponent_color):
+            print(f"Checkmate! {piece.color.capitalize()} wins!")
+            self.game_over = True
+        elif self.is_in_check(opponent_color):
             print(f"Check to {opponent_color}!")
 
         return True  # Move was successful
