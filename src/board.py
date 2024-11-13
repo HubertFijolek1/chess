@@ -1,3 +1,5 @@
+# board.py
+
 from chess_piece import King, Queen, Rook, Bishop, Knight, Pawn
 from constants import WHITE, BLACK
 from piece_factory import PieceFactory
@@ -5,6 +7,7 @@ from utils import parse_position, position_to_notation
 import logging
 
 logging.basicConfig(level=logging.INFO)
+
 
 class Board:
     def __init__(self):
@@ -72,6 +75,14 @@ class Board:
     def move_piece(self, start: tuple, end: tuple) -> bool:
         """
         Moves a piece from the start position to the end position if the move is valid and doesn't put own king in check.
+        After a successful move, checks if the opponent's king is in check and notifies the player.
+
+        Parameters:
+            start (tuple): Starting position (row, col).
+            end (tuple): Ending position (row, col).
+
+        Returns:
+            bool: True if the move was successful, False otherwise.
         """
         start_row, start_col = start
         end_row, end_col = end
@@ -110,6 +121,12 @@ class Board:
         if captured_piece is not None:
             logging.info(f"{piece} captures {captured_piece} at {position_to_notation(end)}")
 
-        # Update the board state
+        # Switch turns
         self.current_turn = BLACK if self.current_turn == WHITE else WHITE  # Switch turns
+
+        # Check if the opponent's king is in check
+        opponent_color = BLACK if piece.color == WHITE else WHITE
+        if self.is_in_check(opponent_color):
+            print(f"Check to {opponent_color}!")
+
         return True  # Move was successful
