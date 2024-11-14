@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from constants import WHITE, BLACK
+from chess_piece import Rook  # Import Rook for type checking
 
 
 class MovementStrategy(ABC):
@@ -45,10 +46,12 @@ class KingMovementStrategy(MovementStrategy):
 
             # Check if squares king passes through are not under attack
             for col in range(start_col, end_col + step, step):
-                if board.is_square_under_attack((start_row, col), piece.color):
+                if board.is_square_under_attack((start_row, col), BLACK if piece.color == WHITE else WHITE):
                     return False  # Square is under attack
 
             return True  # Castling is valid
+
+        return False  # Invalid move
 
 
 class QueenMovementStrategy(MovementStrategy):

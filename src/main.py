@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 def main():
     """
     Main function to run the chess game. Continuously prompts the user for moves and updates the board.
-    Ends the game when a checkmate is detected.
+    Ends the game when a checkmate, stalemate, or draw condition is detected.
     """
     board = Board()  # Create a new board
     while not board.game_over:
