@@ -14,6 +14,7 @@ class ChessPiece(ABC):
     def __init__(self, color: str, movement_strategy):
         self.color = color  # Color of the piece (WHITE or BLACK)
         self.movement_strategy = movement_strategy
+        self.has_moved = False  # Track if the piece has moved (important for castling and pawn's first move)
 
     @abstractmethod
     def __str__(self) -> str:
@@ -53,6 +54,12 @@ class ChessPiece(ABC):
         if target_piece.color != self.color:
             return True  # Can capture opponent's piece
         return False  # Cannot capture own piece
+
+    def move(self):
+        """
+        Marks the piece as having moved. Should be called after a successful move.
+        """
+        self.has_moved = True
 
 
 class King(ChessPiece):
