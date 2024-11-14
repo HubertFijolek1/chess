@@ -5,6 +5,9 @@ from utils import parse_position, position_to_notation
 import logging
 from collections import defaultdict
 from copy import deepcopy
+import pickle  # Import pickle for serialization
+import os  # For file existence checks
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -209,6 +212,9 @@ class Board:
         Parameters:
             color (str): The color of the pawn to promote.
             position (tuple): The position of the pawn (row, col).
+
+        Returns:
+            ChessPiece: The newly promoted piece.
         """
         while True:
             choice = input("Promote pawn to (Q/R/B/N): ").upper()
@@ -219,7 +225,7 @@ class Board:
                 logging.info(f"Pawn promoted to {new_piece} at {position_to_notation(position)}")
                 # Reset move counter after promotion
                 self.move_counter = 0
-                break
+                return new_piece
             else:
                 print("Invalid choice. Please select Q, R, B, or N.")
 
@@ -438,7 +444,8 @@ class Board:
             self.move_counter -= 1 if self.move_counter > 0 else 0
 
         # Restore the position history
-        self.position_history[self.serialize_board()] -= 1
+        current_serialized = self.serialize_board()
+        self.position_history[current_serialized] -= 1
 
         # Switch turns back
         self.current_turn = BLACK if self.current_turn == WHITE else WHITE
@@ -450,6 +457,59 @@ class Board:
         print("Last move undone.")
 
         return True
+
+    def save_game(self, filename: str) -> bool:
+        """
+        Saves the current game state to a file.
+
+        Parameters:
+            filename (str): The name of the file to save the game state.
+
+        Returns:
+            bool: True if the game was saved successfully, False otherwise.
+        """
+        try:
+            with open(filename, 'wb') as file:
+                pickle.dump(self, file)
+            logging.info(f"Game saved to {filename}.")
+            print(f"Game successfully saved to {filename}.")
+            return True
+        except Exception as e:
+            logging.error(f"Failed to save game to {filename}: {e}")
+            print(f"Failed to save game to {filename}.")
+            return False
+
+    def load_game(self, filename: str) -> bool:
+        """
+        Loads a game state from a file.
+
+        Parameters:
+            filename (str): The name of the file to load the game state from.
+
+        Returns:
+            bool: True if the game was loaded successfully, False otherwise.
+        """
+        if not os.path.exists(filename):
+            print(f"Save file '{filename}' does not exist.")
+            return False
+        try:
+            with open(filename, 'rb') as file:
+                loaded_board = pickle.load(file)
+            # Restore all attributes
+            self.grid = loaded_board.grid
+            self.current_turn = loaded_board.current_turn
+            self.game_over = loaded_board.game_over
+            self.last_move = loaded_board.last_move
+            self.move_counter = loaded_board.move_counter
+            self.position_history = loaded_board.position_history
+            self.move_history = loaded_board.move_history
+            logging.info(f"Game loaded from {filename}.")
+            print(f"Game successfully loaded from {filename}.")
+            return True
+        except Exception as e:
+            logging.error(f"Failed to load game from {filename}: {e}")
+            print(f"Failed to load game from {filename}.")
+            return False
 
     def serialize_board(self) -> str:
         """
