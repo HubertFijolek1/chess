@@ -10,11 +10,18 @@ def main():
     """
     Main function to run the chess game. Continuously prompts the user for moves and updates the board.
     Ends the game when a checkmate, stalemate, or draw condition is detected.
+    Allows players to undo the last move using the 'undo' command.
     """
     board = Board()  # Create a new board
     while not board.game_over:
         board.display()  # Display the current board
-        move = input(f"{board.current_turn.capitalize()}'s move (e.g., e2 e4): ").strip()
+        move = input(f"{board.current_turn.capitalize()}'s move (e.g., e2 e4) or 'undo': ").strip()
+        if move.lower() == 'undo':
+            if board.undo_move():
+                print("Move undone.")
+            else:
+                print("Cannot undo move.")
+            continue
         try:
             start, end = move.strip().split()  # Split the input into start and end positions
             start_pos = parse_position(start)  # Parse start position
@@ -22,7 +29,7 @@ def main():
             if not board.move_piece(start_pos, end_pos):  # Attempt to move the piece
                 print("Invalid move, try again.")
         except ValueError:
-            print("Invalid input format, please use the format 'e2 e4'.")
+            print("Invalid input format, please use the format 'e2 e4' or 'undo'.")
 
 
 if __name__ == "__main__":

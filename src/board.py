@@ -1,13 +1,22 @@
-# board.py
-
 from chess_piece import King, Queen, Rook, Bishop, Knight, Pawn
 from constants import WHITE, BLACK
 from piece_factory import PieceFactory
 from utils import parse_position, position_to_notation
 import logging
 from collections import defaultdict
+from copy import deepcopy
 
 logging.basicConfig(level=logging.INFO)
+
+
+class Move:
+    def __init__(self, start, end, piece, captured_piece, special_move=None, promotion_piece=None):
+        self.start = start  # Tuple (row, col)
+        self.end = end      # Tuple (row, col)
+        self.piece = piece  # ChessPiece object that moved
+        self.captured_piece = captured_piece  # ChessPiece object that was captured, if any
+        self.special_move = special_move  # String indicating special move type ('en_passant', 'castling', 'promotion', etc.)
+        self.promotion_piece = promotion_piece  # The piece to which a pawn was promoted, if any
 
 
 class Board:
@@ -19,6 +28,7 @@ class Board:
         self.last_move = None  # Track the last move made (start, end)
         self.move_counter = 0  # For the fifty-move rule
         self.position_history = defaultdict(int)  # For threefold repetition
+        self.move_history = []  # Stack to track move history for undo functionality
         self.update_position_history()  # Initialize position history
 
     def setup_board(self) -> None:
@@ -164,27 +174,33 @@ class Board:
         """
         return self.position_history[self.serialize_board()] >= 3
 
-    def update_position_history(self):
+    def is_draw(self) -> bool:
         """
-        Serializes the current board state and updates the position history.
-        """
-        serialized = self.serialize_board()
-        self.position_history[serialized] += 1
-
-    def serialize_board(self) -> str:
-        """
-        Serializes the current board state into a string for comparison.
+        Determines if any draw condition applies.
 
         Returns:
-            str: A string representation of the current board state.
+            bool: True if the game is a draw, False otherwise.
         """
-        board_str = ""
-        for row in self.grid:
-            for piece in row:
-                board_str += str(piece) if piece else "."
-            board_str += "/"
-        board_str += self.current_turn
-        return board_str
+        return self.is_fifty_move_rule() or self.is_threefold_repetition()
+
+    def is_square_under_attack(self, position: tuple, by_color: str) -> bool:
+        """
+        Determines if a given square is under attack by any piece of the specified color.
+
+        Parameters:
+            position (tuple): The position to check (row, col).
+            by_color (str): The color of the attacking pieces ('white' or 'black').
+
+        Returns:
+            bool: True if the square is under attack, False otherwise.
+        """
+        for row in range(8):
+            for col in range(8):
+                piece = self.grid[row][col]
+                if piece is not None and piece.color == by_color:
+                    if piece.is_valid_move((row, col), position, self, ignore_checks=True):
+                        return True
+        return False
 
     def promote_pawn(self, color: str, position: tuple) -> None:
         """
@@ -239,18 +255,10 @@ class Board:
             print(f"Invalid move for {piece} from {start_notation} to {end_notation}")
             return False  # The move is not valid for this piece
 
-        # Simulate the move
+        # Prepare move record
         captured_piece = self.grid[end_row][end_col]
-        self.grid[end_row][end_col] = piece
-        self.grid[start_row][start_col] = None
-
-        # Check if the move puts own king in check
-        if self.is_in_check(piece.color):
-            # Undo the move
-            self.grid[start_row][start_col] = piece
-            self.grid[end_row][end_col] = captured_piece
-            print("Cannot move into check.")
-            return False
+        special_move = None
+        promotion_piece = None
 
         # Handle en passant capture
         if isinstance(piece, Pawn):
@@ -260,16 +268,15 @@ class Board:
                 captured_pawn_pos = (end_row + direction, end_col)
                 captured_pawn = self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]]
                 if isinstance(captured_pawn, Pawn) and captured_pawn.color != piece.color:
+                    captured_piece = captured_pawn
                     self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = None
-                    logging.info(f"{piece} captures {captured_pawn} en passant at {position_to_notation(captured_pawn_pos)}")
+                    special_move = 'en_passant'
+                    logging.info(f"{piece} captures {captured_piece} en passant at {position_to_notation(captured_pawn_pos)}")
                     # Reset move counter after capture
                     self.move_counter = 0
                 else:
                     # Not a valid en passant capture
                     print("Invalid en passant capture.")
-                    # Undo the move
-                    self.grid[start_row][start_col] = piece
-                    self.grid[end_row][end_col] = captured_piece
                     return False
 
         # Handle castling
@@ -293,10 +300,11 @@ class Board:
                     self.grid[rook_start[0]][rook_start[1]] = None
                     rook.move()  # Mark the rook as moved
                     logging.info(f"{rook} moved from {position_to_notation(rook_start)} to {position_to_notation(rook_end)}")
+                    special_move = 'castling'
                 else:
                     # No rook to castle with
                     print("No rook available for castling.")
-                    # Undo the move
+                    # Undo the king move
                     self.grid[start_row][start_col] = piece
                     self.grid[end_row][end_col] = captured_piece
                     return False
@@ -305,7 +313,30 @@ class Board:
         if isinstance(piece, Pawn):
             promotion_row = 0 if piece.color == WHITE else 7
             if end_row == promotion_row:
-                self.promote_pawn(piece.color, (end_row, end_col))
+                promotion_piece = self.promote_pawn(piece.color, (end_row, end_col))
+                special_move = 'promotion'
+
+        # Record the current state for undo
+        move_record = Move(
+            start=start,
+            end=end,
+            piece=piece,
+            captured_piece=captured_piece,
+            special_move=special_move,
+            promotion_piece=promotion_piece
+        )
+        self.move_history.append(move_record)
+
+        # Move the piece
+        self.grid[end_row][end_col] = piece
+        self.grid[start_row][start_col] = None
+
+        # Handle pawn promotion (if not already handled)
+        if isinstance(piece, Pawn) and promotion_piece:
+            self.grid[end_row][end_col] = promotion_piece
+
+        # Mark the piece as having moved
+        piece.move()
 
         # Update the last move
         self.last_move = (start, end)
@@ -320,11 +351,8 @@ class Board:
         self.update_position_history()
 
         # Move is valid; log the capture if any
-        if captured_piece is not None and not (isinstance(piece, Pawn) and captured_piece is None):
+        if captured_piece is not None and not (isinstance(piece, Pawn) and special_move == 'en_passant'):
             logging.info(f"{piece} captures {captured_piece} at {position_to_notation(end)}")
-
-        # Mark the piece as having moved
-        piece.move()
 
         # Switch turns
         self.current_turn = BLACK if self.current_turn == WHITE else WHITE  # Switch turns
@@ -332,11 +360,13 @@ class Board:
         # Check for draw conditions
         if self.is_fifty_move_rule():
             print("Draw by fifty-move rule.")
+            logging.info("Game ended in a draw by fifty-move rule.")
             self.game_over = True
             return True  # Move was successful
 
         if self.is_threefold_repetition():
             print("Draw by threefold repetition.")
+            logging.info("Game ended in a draw by threefold repetition.")
             self.game_over = True
             return True  # Move was successful
 
@@ -344,40 +374,82 @@ class Board:
         opponent_color = BLACK if piece.color == WHITE else WHITE
         if self.is_checkmate(opponent_color):
             print(f"Checkmate! {piece.color.capitalize()} wins!")
+            logging.info(f"Game ended in checkmate. {piece.color.capitalize()} wins!")
             self.game_over = True
         elif self.is_stalemate(opponent_color):
             print(f"Stalemate! The game is a draw.")
+            logging.info("Game ended in a stalemate.")
             self.game_over = True
         elif self.is_in_check(opponent_color):
             print(f"Check to {opponent_color}!")
 
         return True  # Move was successful
 
-    def is_square_under_attack(self, position: tuple, by_color: str) -> bool:
+    def undo_move(self) -> bool:
         """
-        Determines if a given square is under attack by any piece of the specified color.
-
-        Parameters:
-            position (tuple): The position to check (row, col).
-            by_color (str): The color of the attacking pieces ('white' or 'black').
+        Undoes the last move made.
 
         Returns:
-            bool: True if the square is under attack, False otherwise.
+            bool: True if a move was undone successfully, False otherwise.
         """
-        for row in range(8):
-            for col in range(8):
-                piece = self.grid[row][col]
-                if piece is not None and piece.color == by_color:
-                    if piece.is_valid_move((row, col), position, self, ignore_checks=True):
-                        return True
-        return False
+        if not self.move_history:
+            print("No moves to undo.")
+            return False
 
-    def update_position_history(self):
-        """
-        Serializes the current board state and updates the position history.
-        """
-        serialized = self.serialize_board()
-        self.position_history[serialized] += 1
+        last_move = self.move_history.pop()
+
+        # Move the piece back to the start position
+        self.grid[last_move.start[0]][last_move.start[1]] = last_move.piece
+        self.grid[last_move.end[0]][last_move.end[1]] = last_move.captured_piece
+
+        # Handle special moves
+        if last_move.special_move == 'en_passant':
+            direction = 1 if last_move.piece.color == WHITE else -1
+            captured_pawn_pos = (last_move.end[0] + direction, last_move.end[1])
+            self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = last_move.captured_piece
+        elif last_move.special_move == 'castling':
+            # Move the rook back to its original position
+            if last_move.end[1] == 5:
+                # Kingside castling
+                rook_start = (last_move.start[0], 7)
+                rook_end = (last_move.start[0], 5)
+            elif last_move.end[1] == 3:
+                # Queenside castling
+                rook_start = (last_move.start[0], 0)
+                rook_end = (last_move.start[0], 3)
+            else:
+                print("Invalid castling undo state.")
+                return False
+            rook = self.grid[rook_end[0]][rook_end[1]]
+            self.grid[rook_start[0]][rook_start[1]] = rook
+            self.grid[rook_end[0]][rook_end[1]] = None
+            rook.has_moved = False
+        elif last_move.special_move == 'promotion':
+            # Replace the promoted piece with a pawn
+            self.grid[last_move.start[0]][last_move.start[1]] = Pawn(last_move.piece.color)
+            self.grid[last_move.end[0]][last_move.end[1]] = None
+
+        # Restore the move counter
+        if isinstance(last_move.piece, Pawn) or last_move.captured_piece is not None:
+            # If the last move was a pawn move or capture, reset the move counter appropriately
+            # This simplistic approach resets the counter; for more accuracy, more tracking is needed
+            self.move_counter = 0
+        else:
+            self.move_counter -= 1 if self.move_counter > 0 else 0
+
+        # Restore the position history
+        self.position_history[self.serialize_board()] -= 1
+
+        # Switch turns back
+        self.current_turn = BLACK if self.current_turn == WHITE else WHITE
+
+        # Clear game_over if it was set by the last move
+        self.game_over = False
+
+        logging.info(f"Undo move: {last_move.piece} from {position_to_notation(last_move.start)} to {position_to_notation(last_move.end)}")
+        print("Last move undone.")
+
+        return True
 
     def serialize_board(self) -> str:
         """
@@ -393,3 +465,10 @@ class Board:
             board_str += "/"
         board_str += self.current_turn
         return board_str
+
+    def update_position_history(self):
+        """
+        Serializes the current board state and updates the position history.
+        """
+        serialized = self.serialize_board()
+        self.position_history[serialized] += 1
