@@ -1,3 +1,5 @@
+# board.py
+
 from chess_piece import King, Queen, Rook, Bishop, Knight, Pawn
 from constants import WHITE, BLACK
 from piece_factory import PieceFactory
@@ -124,6 +126,24 @@ class Board:
             return True
         return False
 
+    def promote_pawn(self, color: str, position: tuple) -> None:
+        """
+        Promotes a pawn at the given position to a chosen piece.
+
+        Parameters:
+            color (str): The color of the pawn to promote.
+            position (tuple): The position of the pawn (row, col).
+        """
+        while True:
+            choice = input("Promote pawn to (Q/R/B/N): ").upper()
+            if choice in ['Q', 'R', 'B', 'N']:
+                new_piece = PieceFactory.create_piece(choice, color)
+                self.grid[position[0]][position[1]] = new_piece
+                logging.info(f"Pawn promoted to {new_piece} at {position_to_notation(position)}")
+                break
+            else:
+                print("Invalid choice. Please select Q, R, B, or N.")
+
     def move_piece(self, start: tuple, end: tuple) -> bool:
         """
         Moves a piece from the start position to the end position if the move is valid and doesn't put own king in check.
@@ -172,6 +192,12 @@ class Board:
         # Move is valid; log the capture if any
         if captured_piece is not None:
             logging.info(f"{piece} captures {captured_piece} at {position_to_notation(end)}")
+
+        # Handle pawn promotion
+        if isinstance(piece, Pawn):
+            promotion_row = 0 if piece.color == WHITE else 7
+            if end_row == promotion_row:
+                self.promote_pawn(piece.color, (end_row, end_col))
 
         # Switch turns
         self.current_turn = BLACK if self.current_turn == WHITE else WHITE  # Switch turns
