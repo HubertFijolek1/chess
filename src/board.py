@@ -205,6 +205,59 @@ class Board:
                         return True
         return False
 
+    def get_all_legal_moves(self, color: str) -> list:
+        """
+        Retrieves all legal moves for the given color.
+
+        Parameters:
+            color (str): The color of the player ('white' or 'black').
+
+        Returns:
+            list: A list of tuples representing legal moves in the format ((start_row, start_col), (end_row, end_col)).
+        """
+        legal_moves = []
+        for row in range(8):
+            for col in range(8):
+                piece = self.grid[row][col]
+                if piece is not None and piece.color == color:
+                    for dest_row in range(8):
+                        for dest_col in range(8):
+                            if piece.is_valid_move((row, col), (dest_row, dest_col), self):
+                                # Simulate the move
+                                captured_piece = self.grid[dest_row][dest_col]
+                                original_piece = self.grid[row][col]
+                                self.grid[dest_row][dest_col] = piece
+                                self.grid[row][col] = None
+
+                                # Handle en passant capture
+                                special_move = None
+                                if isinstance(piece, Pawn) and (dest_col != col) and captured_piece is None:
+                                    direction = 1 if piece.color == WHITE else -1
+                                    captured_pawn_pos = (dest_row + direction, dest_col)
+                                    captured_pawn = self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]]
+                                    if isinstance(captured_pawn, Pawn) and captured_pawn.color != piece.color:
+                                        captured_piece = captured_pawn
+                                        special_move = 'en_passant'
+                                        self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = None
+
+                                # Handle castling
+                                if isinstance(piece, King) and abs(dest_col - col) == 2:
+                                    special_move = 'castling'
+
+                                # Check if the move would leave the king in check
+                                if not self.is_in_check(color):
+                                    legal_moves.append(((row, col), (dest_row, dest_col)))
+
+                                # Undo the move
+                                self.grid[row][col] = original_piece
+                                self.grid[dest_row][dest_col] = captured_piece
+
+                                # Restore captured pawn if en passant was simulated
+                                if special_move == 'en_passant' and captured_piece is not None:
+                                    self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = captured_pawn
+
+        return legal_moves
+
     def promote_pawn(self, color: str, position: tuple) -> None:
         """
         Promotes a pawn at the given position to a chosen piece.
@@ -432,8 +485,8 @@ class Board:
             rook.has_moved = False
         elif last_move.special_move == 'promotion':
             # Replace the promoted piece with a pawn
-            self.grid[last_move.start[0]][last_move.start[1]] = Pawn(last_move.piece.color)
             self.grid[last_move.end[0]][last_move.end[1]] = None
+            self.grid[last_move.start[0]][last_move.start[1]] = Pawn(last_move.piece.color)
 
         # Restore the move counter
         if isinstance(last_move.piece, Pawn) or last_move.captured_piece is not None:
@@ -532,3 +585,56 @@ class Board:
         """
         serialized = self.serialize_board()
         self.position_history[serialized] += 1
+
+    def get_all_legal_moves(self, color: str) -> list:
+        """
+        Retrieves all legal moves for the given color.
+
+        Parameters:
+            color (str): The color of the player ('white' or 'black').
+
+        Returns:
+            list: A list of tuples representing legal moves in the format ((start_row, start_col), (end_row, end_col)).
+        """
+        legal_moves = []
+        for row in range(8):
+            for col in range(8):
+                piece = self.grid[row][col]
+                if piece is not None and piece.color == color:
+                    for dest_row in range(8):
+                        for dest_col in range(8):
+                            if piece.is_valid_move((row, col), (dest_row, dest_col), self):
+                                # Simulate the move
+                                captured_piece = self.grid[dest_row][dest_col]
+                                original_piece = self.grid[row][col]
+                                self.grid[dest_row][dest_col] = piece
+                                self.grid[row][col] = None
+
+                                # Handle en passant capture
+                                special_move = None
+                                if isinstance(piece, Pawn) and (dest_col != col) and captured_piece is None:
+                                    direction = 1 if piece.color == WHITE else -1
+                                    captured_pawn_pos = (dest_row + direction, dest_col)
+                                    captured_pawn = self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]]
+                                    if isinstance(captured_pawn, Pawn) and captured_pawn.color != piece.color:
+                                        captured_piece = captured_pawn
+                                        special_move = 'en_passant'
+                                        self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = None
+
+                                # Handle castling
+                                if isinstance(piece, King) and abs(dest_col - col) == 2:
+                                    special_move = 'castling'
+
+                                # Check if the move would leave the king in check
+                                if not self.is_in_check(color):
+                                    legal_moves.append(((row, col), (dest_row, dest_col)))
+
+                                # Undo the move
+                                self.grid[row][col] = original_piece
+                                self.grid[dest_row][dest_col] = captured_piece
+
+                                # Restore captured pawn if en passant was simulated
+                                if special_move == 'en_passant' and captured_piece is not None:
+                                    self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = captured_pawn
+
+        return legal_moves
