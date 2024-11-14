@@ -29,7 +29,7 @@ def main():
                 ai_color = input("Should AI play as white or black? ").strip().lower()
                 if ai_color not in ['white', 'black']:
                     print("Invalid choice. Please enter 'white' or 'black'.")
-            ai_player = AIPlayer(ai_color)
+            ai_player = AIPlayer(ai_color, depth=3)  # You can adjust depth for difficulty
             print(f"Human vs AI selected. AI is playing as {ai_player.color}.")
             break
         else:

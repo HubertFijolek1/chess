@@ -23,6 +23,15 @@ class Move:
 
 
 class Board:
+    PIECE_VALUES = {
+        'P': 100,
+        'N': 320,
+        'B': 330,
+        'R': 500,
+        'Q': 900,
+        'K': 20000
+    }
+
     def __init__(self):
         self.grid = [[None for _ in range(8)] for _ in range(8)]  # Initialize an 8x8 grid with None
         self.current_turn = WHITE  # White starts first
@@ -119,16 +128,35 @@ class Board:
                                 self.grid[dest_row][dest_col] = piece
                                 self.grid[row][col] = None
 
+                                # Handle en passant capture
+                                special_move = None
+                                if isinstance(piece, Pawn) and (dest_col != col) and captured_piece is None:
+                                    direction = 1 if piece.color == WHITE else -1
+                                    captured_pawn_pos = (dest_row + direction, dest_col)
+                                    captured_pawn = self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]]
+                                    if isinstance(captured_pawn, Pawn) and captured_pawn.color != piece.color:
+                                        captured_piece = captured_pawn
+                                        special_move = 'en_passant'
+                                        self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = None
+
+                                # Handle castling
+                                if isinstance(piece, King) and abs(dest_col - col) == 2:
+                                    special_move = 'castling'
+
                                 # Check if the move would leave the king in check
                                 if not self.is_in_check(color):
                                     # Undo the move
                                     self.grid[row][col] = original_piece
                                     self.grid[dest_row][dest_col] = captured_piece
+                                    if special_move == 'en_passant' and captured_piece is not None:
+                                        self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = captured_pawn
                                     return True  # Found at least one legal move
 
                                 # Undo the move
                                 self.grid[row][col] = original_piece
                                 self.grid[dest_row][dest_col] = captured_piece
+                                if special_move == 'en_passant' and captured_piece is not None:
+                                    self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = captured_pawn
         return False  # No legal moves found
 
     def is_checkmate(self, color: str) -> bool:
@@ -257,6 +285,28 @@ class Board:
                                     self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = captured_pawn
 
         return legal_moves
+
+    def evaluate_board(self, color: str) -> int:
+        """
+        Evaluates the board state from the perspective of the given color.
+
+        Parameters:
+            color (str): The color from whose perspective the board is evaluated ('white' or 'black').
+
+        Returns:
+            int: The evaluation score. Positive values favor the given color, negative values favor the opponent.
+        """
+        total = 0
+        for row in range(8):
+            for col in range(8):
+                piece = self.grid[row][col]
+                if piece is not None:
+                    value = self.PIECE_VALUES.get(piece.symbol().upper(), 0)
+                    if piece.color == color:
+                        total += value
+                    else:
+                        total -= value
+        return total
 
     def promote_pawn(self, color: str, position: tuple) -> None:
         """
@@ -586,55 +636,89 @@ class Board:
         serialized = self.serialize_board()
         self.position_history[serialized] += 1
 
-    def get_all_legal_moves(self, color: str) -> list:
+    def evaluate_board(self, color: str) -> int:
         """
-        Retrieves all legal moves for the given color.
+        Evaluates the board state from the perspective of the given color.
 
         Parameters:
-            color (str): The color of the player ('white' or 'black').
+            color (str): The color from whose perspective the board is evaluated ('white' or 'black').
 
         Returns:
-            list: A list of tuples representing legal moves in the format ((start_row, start_col), (end_row, end_col)).
+            int: The evaluation score. Positive values favor the given color, negative values favor the opponent.
         """
-        legal_moves = []
+        total = 0
         for row in range(8):
             for col in range(8):
                 piece = self.grid[row][col]
-                if piece is not None and piece.color == color:
-                    for dest_row in range(8):
-                        for dest_col in range(8):
-                            if piece.is_valid_move((row, col), (dest_row, dest_col), self):
-                                # Simulate the move
-                                captured_piece = self.grid[dest_row][dest_col]
-                                original_piece = self.grid[row][col]
-                                self.grid[dest_row][dest_col] = piece
-                                self.grid[row][col] = None
+                if piece is not None:
+                    value = self.PIECE_VALUES.get(piece.symbol().upper(), 0)
+                    if piece.color == color:
+                        total += value
+                    else:
+                        total -= value
+        return total
 
-                                # Handle en passant capture
-                                special_move = None
-                                if isinstance(piece, Pawn) and (dest_col != col) and captured_piece is None:
-                                    direction = 1 if piece.color == WHITE else -1
-                                    captured_pawn_pos = (dest_row + direction, dest_col)
-                                    captured_pawn = self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]]
-                                    if isinstance(captured_pawn, Pawn) and captured_pawn.color != piece.color:
-                                        captured_piece = captured_pawn
-                                        special_move = 'en_passant'
-                                        self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = None
+    def get_move_score(self, move: Move, color: str) -> int:
+        """
+        Evaluates the score of a move based on the resulting board state.
 
-                                # Handle castling
-                                if isinstance(piece, King) and abs(dest_col - col) == 2:
-                                    special_move = 'castling'
+        Parameters:
+            move (Move): The move to evaluate.
+            color (str): The color of the player making the move.
 
-                                # Check if the move would leave the king in check
-                                if not self.is_in_check(color):
-                                    legal_moves.append(((row, col), (dest_row, dest_col)))
+        Returns:
+            int: The evaluation score of the move.
+        """
+        # Simulate the move
+        original_piece = self.grid[move.start[0]][move.start[1]]
+        captured_piece = self.grid[move.end[0]][move.end[1]]
+        self.grid[move.end[0]][move.end[1]] = original_piece
+        self.grid[move.start[0]][move.start[1]] = None
 
-                                # Undo the move
-                                self.grid[row][col] = original_piece
-                                self.grid[dest_row][dest_col] = captured_piece
+        # Handle en passant
+        if move.special_move == 'en_passant':
+            direction = 1 if original_piece.color == WHITE else -1
+            captured_pawn_pos = (move.end[0] + direction, move.end[1])
+            captured_pawn = self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]]
+            self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = None
 
-                                # Restore captured pawn if en passant was simulated
-                                if special_move == 'en_passant' and captured_piece is not None:
-                                    self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = captured_pawn
+        # Handle castling
+        if move.special_move == 'castling':
+            if move.end[1] == 5:
+                # Kingside
+                rook_start = (move.start[0], 7)
+                rook_end = (move.start[0], 5)
+            elif move.end[1] == 3:
+                # Queenside
+                rook_start = (move.start[0], 0)
+                rook_end = (move.start[0], 3)
+            rook = self.grid[rook_end[0]][rook_end[1]]
+            self.grid[rook_end[0]][rook_end[1]] = None
+            self.grid[rook_start[0]][rook_start[1]] = rook
 
-        return legal_moves
+        # Handle promotion
+        if move.special_move == 'promotion' and move.promotion_piece:
+            self.grid[move.end[0]][move.end[1]] = move.promotion_piece
+
+        # Evaluate the board
+        score = self.evaluate_board(color)
+
+        # Undo the move
+        self.grid[move.start[0]][move.start[1]] = original_piece
+        self.grid[move.end[0]][move.end[1]] = captured_piece
+
+        # Restore en passant
+        if move.special_move == 'en_passant' and captured_piece is not None:
+            self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = captured_pawn
+
+        # Restore castling
+        if move.special_move == 'castling':
+            self.grid[rook_start[0]][rook_start[1]] = rook
+            self.grid[rook_end[0]][rook_end[1]] = rook
+
+        # Restore promotion
+        if move.special_move == 'promotion' and move.promotion_piece:
+            self.grid[move.end[0]][move.end[1]] = None
+            self.grid[move.start[0]][move.start[1]] = original_piece
+
+        return score

@@ -20,6 +20,16 @@ class ChessPiece(ABC):
     def __str__(self) -> str:
         pass
 
+    @abstractmethod
+    def symbol(self) -> str:
+        """
+        Returns the symbol representing the piece.
+
+        Returns:
+            str: The symbol of the piece.
+        """
+        pass
+
     def is_valid_move(self, start: tuple, end: tuple, board, ignore_checks=False) -> bool:
         """
         Determines if the move from start to end is valid based on the movement strategy.
@@ -69,6 +79,9 @@ class King(ChessPiece):
     def __str__(self) -> str:
         return 'K' if self.color == WHITE else 'k'
 
+    def symbol(self) -> str:
+        return 'K'
+
 
 class Queen(ChessPiece):
     def __init__(self, color: str):
@@ -76,6 +89,9 @@ class Queen(ChessPiece):
 
     def __str__(self) -> str:
         return 'Q' if self.color == WHITE else 'q'
+
+    def symbol(self) -> str:
+        return 'Q'
 
 
 class Rook(ChessPiece):
@@ -85,6 +101,9 @@ class Rook(ChessPiece):
     def __str__(self) -> str:
         return 'R' if self.color == WHITE else 'r'
 
+    def symbol(self) -> str:
+        return 'R'
+
 
 class Bishop(ChessPiece):
     def __init__(self, color: str):
@@ -92,6 +111,9 @@ class Bishop(ChessPiece):
 
     def __str__(self) -> str:
         return 'B' if self.color == WHITE else 'b'
+
+    def symbol(self) -> str:
+        return 'B'
 
 
 class Knight(ChessPiece):
@@ -101,6 +123,9 @@ class Knight(ChessPiece):
     def __str__(self) -> str:
         return 'N' if self.color == WHITE else 'n'
 
+    def symbol(self) -> str:
+        return 'N'
+
 
 class Pawn(ChessPiece):
     def __init__(self, color: str):
@@ -108,3 +133,6 @@ class Pawn(ChessPiece):
 
     def __str__(self) -> str:
         return 'P' if self.color == WHITE else 'p'
+
+    def symbol(self) -> str:
+        return 'P'
