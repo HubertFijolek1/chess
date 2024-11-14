@@ -1,5 +1,3 @@
-# board.py
-
 from chess_piece import King, Queen, Rook, Bishop, Knight, Pawn
 from constants import WHITE, BLACK
 from piece_factory import PieceFactory
@@ -15,6 +13,7 @@ class Board:
         self.current_turn = WHITE  # White starts first
         self.setup_board()  # Set up the board with initial positions
         self.game_over = False  # Flag to indicate if the game has ended
+        self.last_move = None  # Track the last move made (start, end)
 
     def setup_board(self) -> None:
         """
@@ -189,15 +188,29 @@ class Board:
             print("Cannot move into check.")
             return False
 
-        # Move is valid; log the capture if any
-        if captured_piece is not None:
-            logging.info(f"{piece} captures {captured_piece} at {position_to_notation(end)}")
+        # Handle en passant capture
+        if isinstance(piece, Pawn):
+            if (end_col != start_col) and (captured_piece is None):
+                # This is an en passant capture
+                direction = 1 if piece.color == WHITE else -1
+                captured_pawn_pos = (end_row + direction, end_col)
+                captured_pawn = self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]]
+                if isinstance(captured_pawn, Pawn) and captured_pawn.color != piece.color:
+                    self.grid[captured_pawn_pos[0]][captured_pawn_pos[1]] = None
+                    logging.info(f"{piece} captures {captured_pawn} en passant at {position_to_notation(captured_pawn_pos)}")
 
         # Handle pawn promotion
         if isinstance(piece, Pawn):
             promotion_row = 0 if piece.color == WHITE else 7
             if end_row == promotion_row:
                 self.promote_pawn(piece.color, (end_row, end_col))
+
+        # Update the last move
+        self.last_move = (start, end)
+
+        # Move is valid; log the capture if any
+        if captured_piece is not None:
+            logging.info(f"{piece} captures {captured_piece} at {position_to_notation(end)}")
 
         # Switch turns
         self.current_turn = BLACK if self.current_turn == WHITE else WHITE  # Switch turns

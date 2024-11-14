@@ -14,10 +14,7 @@ def main():
     board = Board()  # Create a new board
     while not board.game_over:
         board.display()  # Display the current board
-        move = input(f"{board.current_turn.capitalize()}'s move (e.g., e2 e4 or 'undo'): ").strip()
-        if move.lower() == 'undo':
-            board.undo_move()
-            continue
+        move = input(f"{board.current_turn.capitalize()}'s move (e.g., e2 e4): ").strip()
         try:
             start, end = move.strip().split()  # Split the input into start and end positions
             start_pos = parse_position(start)  # Parse start position
